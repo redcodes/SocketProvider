@@ -16,8 +16,7 @@ static const GUID gProviderGuid =
 class CSocketProvider
 {
 public:
-	CSocketProvider();
-	virtual ~CSocketProvider();
+	static CSocketProvider& GetInstance();
 
 	int Initialize(
 		WORD                wVersion,
@@ -29,16 +28,19 @@ public:
 	void UnInitialize();
 
 private:
+	CSocketProvider();
+	virtual ~CSocketProvider();
+
 	static int WSPAPI WSPConnect(
-			SOCKET                s,
-			const struct sockaddr FAR* name,
-			int                   namelen,
-			LPWSABUF              lpCallerData,
-			LPWSABUF              lpCalleeData,
-			LPQOS                 lpSQOS,
-			LPQOS                 lpGQOS,
-			LPINT                 lpErrno
-		);
+		SOCKET                s,
+		const struct sockaddr FAR* name,
+		int                   namelen,
+		LPWSABUF              lpCallerData,
+		LPWSABUF              lpCalleeData,
+		LPQOS                 lpSQOS,
+		LPQOS                 lpGQOS,
+		LPINT                 lpErrno
+	);
 private:
 	static WSPPROC_TABLE m_nextWSProcTable;
 };

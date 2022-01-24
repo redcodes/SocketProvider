@@ -2,45 +2,45 @@
 #include "pch.h"
 #include "CSocketProvider.h"
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
-{
-    switch (ul_reason_for_call)
-    {
-    case DLL_PROCESS_ATTACH:
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
-}
-
-static CSocketProvider SocketProvider;
-
-int 
-WSPAPI
-WSPStartup(
-    WORD                wVersion,
-    LPWSPDATA           lpWSPData,
-    LPWSAPROTOCOL_INFOW lpProtocolInfo,
-    WSPUPCALLTABLE      UpCallTable,
-    LPWSPPROC_TABLE     lpProcTable
+BOOL APIENTRY DllMain(HMODULE hModule,
+	DWORD  ul_reason_for_call,
+	LPVOID lpReserved
 )
 {
-    if (0 != SocketProvider.Initialize(wVersion, lpWSPData, lpProtocolInfo, UpCallTable, lpProcTable))
-        return WSAEPROVIDERFAILEDINIT;
+	switch (ul_reason_for_call)
+	{
+	case DLL_PROCESS_ATTACH:
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
+	case DLL_PROCESS_DETACH:
+		break;
+	}
+	return TRUE;
+}
 
-    return 0;
+static CSocketProvider& SocketProvider = CSocketProvider::GetInstance();
+
+int
+WSPAPI
+WSPStartup(
+	WORD                wVersion,
+	LPWSPDATA           lpWSPData,
+	LPWSAPROTOCOL_INFOW lpProtocolInfo,
+	WSPUPCALLTABLE      UpCallTable,
+	LPWSPPROC_TABLE     lpProcTable
+)
+{
+	if (0 != SocketProvider.Initialize(wVersion, lpWSPData, lpProtocolInfo, UpCallTable, lpProcTable))
+		return WSAEPROVIDERFAILEDINIT;
+
+	return 0;
 }
 
 void
 WSPAPI
 GetLspGuid(
-    LPGUID lpGuid
+	LPGUID lpGuid
 )
 {
-    memcpy(lpGuid, &gProviderGuid, sizeof(GUID));
+	memcpy(lpGuid, &gProviderGuid, sizeof(GUID));
 }

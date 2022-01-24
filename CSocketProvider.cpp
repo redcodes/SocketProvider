@@ -36,7 +36,7 @@ DWORD GetCatalogEntryId(LPWSAPROTOCOL_INFO lpProtocolInfo)
 		id = lpProtocolInfo->dwCatalogEntryId;
 	}
 	else // 如果是协议链，则返回协议链最下层的基础协议的ID。注意：协议链中索引从0开始为分层协议，最后一层是基础协议。
-	{	
+	{
 		int index = lpProtocolInfo->ProtocolChain.ChainLen - 1;
 		id = lpProtocolInfo->ProtocolChain.ChainEntries[index];
 	}
@@ -47,11 +47,17 @@ DWORD GetCatalogEntryId(LPWSAPROTOCOL_INFO lpProtocolInfo)
 WSPPROC_TABLE CSocketProvider::m_nextWSProcTable = { 0 };
 CSocketProvider::CSocketProvider()
 {
-	ZeroMemory(&m_nextWSProcTable,sizeof(m_nextWSProcTable));
+	ZeroMemory(&m_nextWSProcTable, sizeof(m_nextWSProcTable));
 }
 
 CSocketProvider::~CSocketProvider()
 {
+}
+
+CSocketProvider& CSocketProvider::GetInstance()
+{
+	static CSocketProvider socketProvider;
+	return socketProvider;
 }
 
 int WSPAPI
@@ -69,7 +75,7 @@ CSocketProvider::WSPConnect(
 	LOG_INFO(_T("WSPConnect"));
 
 	SOCKADDR_IN transferSrv;
-//	inet_pton(AF_INET, "192.168.220.132", &transferSrv.sin_addr.s_addr);
+	//	inet_pton(AF_INET, "192.168.220.132", &transferSrv.sin_addr.s_addr);
 
 	transferSrv.sin_family = AF_INET;
 	transferSrv.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -100,7 +106,7 @@ int CSocketProvider::Initialize(
 
 	int nTotalProtos = 0;
 	LPWSAPROTOCOL_INFO pProtoInfos = NULL;
-	
+
 	do
 	{
 		// 遍历注册表中所有的LSP
@@ -162,7 +168,7 @@ int CSocketProvider::Initialize(
 
 		int nRet = pfnWSPStartup(wVersion, lpWSPData, pPassInfo, UpCallTable, lpProcTable);
 		if (nRet != ERROR_SUCCESS)
-		{		
+		{
 			break;
 		}
 
@@ -172,14 +178,14 @@ int CSocketProvider::Initialize(
 		lpProcTable->lpWSPConnect = &CSocketProvider::WSPConnect;
 
 	} while (FALSE);
-	
+
 	if (NULL != pProtoInfos)
 	{
 		FreeProvider(pProtoInfos);
 		pProtoInfos = NULL;
 	}
 
-    return 0;
+	return 0;
 }
 
 void CSocketProvider::UnInitialize()
