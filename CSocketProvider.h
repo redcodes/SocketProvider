@@ -1,6 +1,7 @@
 #pragma once
 #include <WS2spi.h>
 #pragma comment(lib,"Ws2_32.lib")
+#include "CSocketRedirectRules.h"
 
 #ifdef _WIN64
 // {5A3808E9-44FE-4A49-A750-C2D9D694AA43}
@@ -16,7 +17,8 @@ static const GUID gProviderGuid =
 class CSocketProvider
 {
 public:
-	static CSocketProvider& GetInstance();
+	CSocketProvider(CSocketRedirectRules* pRules);
+	virtual ~CSocketProvider();
 
 	int Initialize(
 		WORD                wVersion,
@@ -28,9 +30,6 @@ public:
 	void UnInitialize();
 
 private:
-	CSocketProvider();
-	virtual ~CSocketProvider();
-
 	static int WSPAPI WSPConnect(
 		SOCKET                s,
 		const struct sockaddr FAR* name,
@@ -42,6 +41,8 @@ private:
 		LPINT                 lpErrno
 	);
 private:
-	static WSPPROC_TABLE m_nextWSProcTable;
+	WSPPROC_TABLE m_nextWSProcTable;
+	CSocketRedirectRules* m_pRules;
+	static CSocketProvider* SOCKETPROVIDER;
 };
 

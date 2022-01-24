@@ -44,20 +44,16 @@ DWORD GetCatalogEntryId(LPWSAPROTOCOL_INFO lpProtocolInfo)
 	return id;
 }
 
-WSPPROC_TABLE CSocketProvider::m_nextWSProcTable = { 0 };
-CSocketProvider::CSocketProvider()
+CSocketProvider* CSocketProvider::SOCKETPROVIDER = NULL;
+CSocketProvider::CSocketProvider(CSocketRedirectRules* pRules)
 {
+	SOCKETPROVIDER = this;
+	m_pRules = pRules;
 	ZeroMemory(&m_nextWSProcTable, sizeof(m_nextWSProcTable));
 }
 
 CSocketProvider::~CSocketProvider()
 {
-}
-
-CSocketProvider& CSocketProvider::GetInstance()
-{
-	static CSocketProvider socketProvider;
-	return socketProvider;
 }
 
 int WSPAPI
@@ -74,23 +70,30 @@ CSocketProvider::WSPConnect(
 {
 	LOG_INFO(_T("WSPConnect"));
 
-	SOCKADDR_IN transferSrv;
-	//	inet_pton(AF_INET, "192.168.220.132", &transferSrv.sin_addr.s_addr);
+	CSocketProvider* pThis = SOCKETPROVIDER;
+	CSocketRedirectRules* pRules = pThis->m_pRules;
 
-	transferSrv.sin_family = AF_INET;
-	transferSrv.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	transferSrv.sin_port = htons(8888);
-	int result = m_nextWSProcTable.lpWSPConnect(s, (SOCKADDR*)&transferSrv, sizeof(SOCKADDR), lpCallerData, lpCalleeData, lpSQOS, lpGQOS, lpErrno);
+	ULONG srcIP = ((sockaddr_in*)name)->sin_addr.S_un.S_addr;
+	USHORT srcPort = ((sockaddr_in*)name)->sin_port;
+	ULONG destIP = 0;
+	USHORT destPort = 0;
 
-	if (SOCKET_ERROR == result)
+	if (0 == pRules->FindRules(srcIP, srcPort, destIP, destPort))
 	{
-		DWORD error = *lpErrno;
-		TCHAR sLog[MAX_PATH] = { 0 };
-		_stprintf_s(sLog, _T("LastError = %u\n"), error);
-		OutputDebugString(sLog);
+		SOCKADDR_IN transferSrv;
+		transferSrv.sin_family = AF_INET;
+		transferSrv.sin_addr.s_addr = destIP;
+		transferSrv.sin_port = destPort;
+		int result = pThis->m_nextWSProcTable.lpWSPConnect(s, (SOCKADDR*)&transferSrv, sizeof(SOCKADDR), lpCallerData, lpCalleeData, lpSQOS, lpGQOS, lpErrno);
+
+		if (SOCKET_ERROR == result)
+		{
+			LOG_INFO(_T("LastError = %u\n"), *lpErrno);
+			return result;
+		}
 	}
 
-	return result;
+	return pThis->m_nextWSProcTable.lpWSPConnect(s, name, namelen, lpCallerData, lpCalleeData, lpSQOS, lpGQOS, lpErrno);
 }
 
 int CSocketProvider::Initialize(

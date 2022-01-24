@@ -1,6 +1,7 @@
 ﻿// dllmain.cpp : 定义 DLL 应用程序的入口点。
 #include "pch.h"
 #include "CSocketProvider.h"
+#include "CSocketRedirectRules.h"
 
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD  ul_reason_for_call,
@@ -18,7 +19,9 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
-static CSocketProvider& SocketProvider = CSocketProvider::GetInstance();
+//TODO:内存泄露，未解决。
+CSocketRedirectRules* pRedirectRules = new CSocketRedirectRules;
+CSocketProvider* pSocketProvider = new CSocketProvider(pRedirectRules);
 
 int
 WSPAPI
@@ -30,7 +33,7 @@ WSPStartup(
 	LPWSPPROC_TABLE     lpProcTable
 )
 {
-	if (0 != SocketProvider.Initialize(wVersion, lpWSPData, lpProtocolInfo, UpCallTable, lpProcTable))
+	if (0 != pSocketProvider->Initialize(wVersion, lpWSPData, lpProtocolInfo, UpCallTable, lpProcTable))
 		return WSAEPROVIDERFAILEDINIT;
 
 	return 0;

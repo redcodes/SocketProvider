@@ -160,12 +160,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CSocketProvider.h" />
+    <ClInclude Include="CSocketRedirectRules.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CSocketProvider.cpp" />
+    <ClCompile Include="CSocketRedirectRules.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

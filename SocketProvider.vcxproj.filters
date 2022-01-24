@@ -27,6 +27,9 @@
     <ClInclude Include="Log.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CSocketRedirectRules.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -36,6 +39,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CSocketProvider.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CSocketRedirectRules.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
