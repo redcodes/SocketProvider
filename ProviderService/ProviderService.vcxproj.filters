@@ -21,9 +21,24 @@
     <ClCompile Include="CSocketChannel.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\CSocketRedirectRules.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadImpl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CSocketChannel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CSocketRedirectRules.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="IThread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadImpl.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

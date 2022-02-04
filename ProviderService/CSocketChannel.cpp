@@ -31,6 +31,12 @@ InetSocketAddress::InetSocketAddress(LPCSTR address, USHORT port)
 	m_port = htons(port);
 }
 
+InetSocketAddress::InetSocketAddress(ULONG ip, USHORT port)
+{
+	m_address = ip;
+	m_port = port;
+}
+
 InetSocketAddress::~InetSocketAddress()
 {
 
@@ -142,4 +148,27 @@ CSocketChannel::~CSocketChannel()
 SOCKET CSocketChannel::Socket()
 {
 	return m_hSocket;
+}
+
+CClientSocketChannel::CClientSocketChannel(int af, int type, int protocol) : CSocketChannel(af,type,protocol)
+{
+
+}
+
+CClientSocketChannel::~CClientSocketChannel()
+{
+
+}
+
+int CClientSocketChannel::Connect(const InetSocketAddress& local)
+{
+	sockaddr_in server_addr = { 0 };
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_addr.s_addr = local.GetAddress();
+	server_addr.sin_port = local.GetPort();
+
+	if (SOCKET_ERROR == ::connect(Socket(), (struct sockaddr*)&server_addr, sizeof(server_addr)))
+		return WSAGetLastError();
+
+	return 0;
 }

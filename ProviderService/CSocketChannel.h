@@ -8,6 +8,7 @@ class InetSocketAddress
 {
 public:
 	InetSocketAddress(LPCSTR address,USHORT port);
+	InetSocketAddress(ULONG ip, USHORT port);
 	virtual ~InetSocketAddress();
 
 	ULONG GetAddress()const;
@@ -43,6 +44,17 @@ public:
 
 	int Bind(const InetSocketAddress& local, int backlog);
 	CSocketChannel* Accept();
+	InetSocketAddress GetLocalAddress()const;
+
+};
+
+class CClientSocketChannel : public CSocketChannel
+{
+public:
+	CClientSocketChannel(int af, int type, int protocol);
+	virtual ~CClientSocketChannel();
+
+	int Connect(const InetSocketAddress& local);
 };
 
 class ServerSocket

@@ -1,6 +1,7 @@
 #pragma once
 #include <stdarg.h>
 #include <stdio.h>
+#include <tchar.h>
 
 #define PUT_PUT_DEBUG_BUF_LEN   1024
 static void LOG_INFOA(const char* log, ...)

@@ -161,7 +161,6 @@
   <ItemGroup>
     <ClInclude Include="CSocketProvider.h" />
     <ClInclude Include="CSocketRedirectRules.h" />
-    <ClInclude Include="framework.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
