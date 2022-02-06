@@ -26,12 +26,12 @@ public:
 	static void Release(CSocketChannel* pChannel);
 	int Read(LPSTR buf,int bufSize);
 	int Write(LPCSTR buf,int bufSize);
-	int Close();
+	int Close();	
+	SOCKET Socket();
 protected:
 	CSocketChannel(int af, int type, int protocol);
 	CSocketChannel(SOCKET hSocket);
 	virtual ~CSocketChannel();
-	SOCKET Socket();
 private:
 	SOCKET m_hSocket;
 };

@@ -84,24 +84,88 @@ void ThreadProc(void* param)
 			break;
 		}
 
+		fd_set readfds, writefds, exceptfds;
+		FD_ZERO(&readfds);
+		FD_ZERO(&writefds);
+		FD_ZERO(&exceptfds);
+
+		FD_SET(pLocalChannel->Socket(), &readfds);
+		FD_SET(pRemoteChannel->Socket(), &readfds);
+
+		FD_SET(pLocalChannel->Socket(), &exceptfds);
+		FD_SET(pRemoteChannel->Socket(), &exceptfds);
+
+		int selectResult = 0;
+		fd_set readfdsOld, writefdsOld, exceptfdsOld;
+
+		int nReadLength = 0;
+		int nWriteLength = 0;
 
 		while (TRUE)
 		{
 			byte recvBuf[4096] = { 0 };
-			int nReadLength = pLocalChannel->Read((LPSTR)recvBuf, sizeof(recvBuf));
-			if (nReadLength <= 0)
+
+			readfdsOld = readfds;
+			writefdsOld = writefds;
+			exceptfdsOld = exceptfds;
+
+			selectResult = select(0, &readfdsOld, &writefdsOld, &exceptfdsOld, NULL);
+			if (selectResult <= 0)
 			{
-				LOG_INFO(_T("read failed"));
+				LOG_INFO(_T("select error = %d"), WSAGetLastError());
 				break;
 			}
 
-			LOG_INFOA("request = %s", recvBuf);
-
-			int nWriteLength = pRemoteChannel->Write((LPSTR)recvBuf, nReadLength);
-			if (nWriteLength <= 0)
+			for (DWORD i = 0; i < readfds.fd_count; i++)
 			{
-				LOG_INFO(_T("write failed"));
-				break;
+				// 本地应用数据
+				if (FD_ISSET(readfds.fd_array[i], &readfdsOld))
+				{
+					if (readfds.fd_array[i] == pLocalChannel->Socket())
+					{
+						nReadLength = pLocalChannel->Read((LPSTR)recvBuf, sizeof(recvBuf));
+						if (nReadLength <= 0)
+						{
+							LOG_INFO(_T("read failed"));
+							break;
+						}
+
+						LOG_INFOA("request = %s", recvBuf);
+
+						nWriteLength = pRemoteChannel->Write((LPSTR)recvBuf, nReadLength);
+						if (nWriteLength <= 0)
+						{
+							LOG_INFO(_T("write failed"));
+							break;
+						}
+					}
+
+					// 远程应用服务器返回数据
+					if (readfds.fd_array[i] == pRemoteChannel->Socket())
+					{
+						nReadLength = pRemoteChannel->Read((LPSTR)recvBuf, sizeof(recvBuf));
+						if (nReadLength <= 0)
+						{
+							LOG_INFO(_T("read failed"));
+							break;
+						}
+
+						LOG_INFOA("request = %s", recvBuf);
+
+						nWriteLength = pLocalChannel->Write((LPSTR)recvBuf, nReadLength);
+						if (nWriteLength <= 0)
+						{
+							LOG_INFO(_T("write failed"));
+							break;
+						}
+					}
+				}
+
+				if (FD_ISSET(exceptfds.fd_array[i], &exceptfdsOld))
+				{
+					LOG_INFO(_T("select except"));
+					break;
+				}
 			}
 		}
 
@@ -150,7 +214,7 @@ void CmdThreadProc(void* param)
 		{
 			ZeroMemory(buf, sizeof(buf));
 			memcpy(buf, &destIP, sizeof(destIP));
-			memcpy(buf + sizeof(destIP), &destPort, sizeof(destPort));	
+			memcpy(buf + sizeof(destIP), &destPort, sizeof(destPort));
 			pIPC->Write(buf, 6);
 		}
 		else
