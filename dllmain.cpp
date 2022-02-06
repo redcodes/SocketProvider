@@ -1,7 +1,6 @@
 ﻿// dllmain.cpp : 定义 DLL 应用程序的入口点。
 #include "pch.h"
 #include "CSocketProvider.h"
-#include "CSocketRedirectRules.h"
 
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD  ul_reason_for_call,
@@ -20,8 +19,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 }
 
 //TODO:内存泄露，未解决。
-CSocketRedirectRules* pRedirectRules = new CSocketRedirectRules;
-CSocketProvider* pSocketProvider = new CSocketProvider(pRedirectRules);
+CSocketProvider* pSocketProvider = new CSocketProvider();
 
 int
 WSPAPI

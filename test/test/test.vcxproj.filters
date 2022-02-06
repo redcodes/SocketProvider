@@ -18,39 +18,21 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CSocketChannel.cpp">
+    <ClCompile Include="..\..\ProviderService\CIPC.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\CSocketRedirectRules.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ThreadImpl.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CIPC.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CNamedPipe.cpp">
+    <ClCompile Include="..\..\ProviderService\CNamedPipe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CSocketChannel.h">
+    <ClInclude Include="..\..\ProviderService\CIPC.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\CSocketRedirectRules.h">
+    <ClInclude Include="..\..\ProviderService\CNamedPipe.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="IThread.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ThreadImpl.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CIPC.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CNamedPipe.h">
+    <ClInclude Include="..\..\Log.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

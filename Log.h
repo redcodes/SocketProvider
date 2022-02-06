@@ -30,6 +30,8 @@ static void LOG_INFOW(const WCHAR* strOutputString, ...)
 
 #ifdef _UNICODE
 #define LOG_INFO LOG_INFOW
+#define LOG_INFOA LOG_INFOA
 #else
 #define LOG_INFO LOG_INFOA
+#define LOG_INFOW LOG_INFOW
 #endif

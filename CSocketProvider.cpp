@@ -1,7 +1,10 @@
 #include "pch.h"
 #include "CSocketProvider.h"
 #include <Ws2tcpip.h>
+#include "ProviderService/CIPC.h"
+#include "winsock.h"
 
+const TCHAR* IPCNAME = _T("\\\\.\\pipe\\namedpipeServer");
 LPWSAPROTOCOL_INFOW GetProvider(LPINT lpnTotalProtocols)
 {
 	DWORD dwSize = 0;
@@ -44,11 +47,44 @@ DWORD GetCatalogEntryId(LPWSAPROTOCOL_INFO lpProtocolInfo)
 	return id;
 }
 
-CSocketProvider* CSocketProvider::SOCKETPROVIDER = NULL;
-CSocketProvider::CSocketProvider(CSocketRedirectRules* pRules)
+int FindRules(ULONG srcIP, USHORT srcPort, ULONG& destIP, USHORT& destPort)
 {
-	SOCKETPROVIDER = this;
-	m_pRules = pRules;
+	CIPC* pIPC = CIPC::GetInstance();
+	int result = 0;
+	do
+	{
+		if ((result = pIPC->Connect(IPCNAME)) != 0)
+			break;
+
+		const int BUFSIZE = 10;
+		DWORD pid = GetCurrentProcessId();
+		BYTE buf[BUFSIZE] = { 0 };
+		memcpy(buf, &srcIP, sizeof(srcIP));
+		memcpy(buf + sizeof(srcIP), &srcPort, sizeof(srcPort));
+		memcpy(buf + sizeof(srcIP) + sizeof(srcPort),&pid,sizeof(pid));
+		pIPC->Write(buf, BUFSIZE);
+
+		ZeroMemory(buf, sizeof(buf));
+		DWORD readed = 0;
+		pIPC->Read(buf, 6, readed);
+		memcpy(&destIP, buf, sizeof(destIP));
+		memcpy(&destPort, buf + sizeof(destIP), sizeof(destPort));
+
+		result = 0;
+
+	} while (FALSE);
+
+	pIPC->Close();
+	delete pIPC;
+	pIPC = NULL;
+
+	return result;
+}
+
+static WSPPROC_TABLE m_nextWSProcTable;
+
+CSocketProvider::CSocketProvider()
+{
 	ZeroMemory(&m_nextWSProcTable, sizeof(m_nextWSProcTable));
 }
 
@@ -70,30 +106,56 @@ CSocketProvider::WSPConnect(
 {
 	LOG_INFO(_T("WSPConnect"));
 
-	CSocketProvider* pThis = SOCKETPROVIDER;
-	CSocketRedirectRules* pRules = pThis->m_pRules;
-
 	ULONG srcIP = ((sockaddr_in*)name)->sin_addr.S_un.S_addr;
 	USHORT srcPort = ((sockaddr_in*)name)->sin_port;
 	ULONG destIP = 0;
 	USHORT destPort = 0;
 
-	if (0 == pRules->FindRules(srcIP, srcPort, destIP, destPort))
+	if (0 == FindRules(srcIP, srcPort, destIP, destPort) && (destIP != 0 && destPort != 0))
 	{
 		SOCKADDR_IN transferSrv;
 		transferSrv.sin_family = AF_INET;
 		transferSrv.sin_addr.s_addr = destIP;
 		transferSrv.sin_port = destPort;
-		int result = pThis->m_nextWSProcTable.lpWSPConnect(s, (SOCKADDR*)&transferSrv, sizeof(SOCKADDR), lpCallerData, lpCalleeData, lpSQOS, lpGQOS, lpErrno);
+		int result = m_nextWSProcTable.lpWSPConnect(s, (SOCKADDR*)&transferSrv, sizeof(SOCKADDR), lpCallerData, lpCalleeData, lpSQOS, lpGQOS, lpErrno);
 
 		if (SOCKET_ERROR == result)
 		{
 			LOG_INFO(_T("LastError = %u\n"), *lpErrno);
-			return result;
+			if (*lpErrno == WSAEWOULDBLOCK)
+			{
+				fd_set Write, Err;
+				TIMEVAL Timeout;
+
+				FD_ZERO(&Write);
+				FD_ZERO(&Err);
+				FD_SET(s, &Write);
+				FD_SET(s, &Err);
+
+				Timeout.tv_sec = 60;
+				Timeout.tv_usec = 0;
+
+				result = m_nextWSProcTable.lpWSPSelect(0,			//ignored
+					NULL,		//read
+					&Write,	//Write Check
+					&Err,		//Error Check
+					&Timeout, lpErrno);
+			}
 		}
+
+		if (SOCKET_ERROR != result)
+		{
+			// 连接成功之后发送真实应用地址
+			char appAddress[6] = { 0 };
+			memcpy(appAddress, &srcIP, sizeof(srcIP));
+			memcpy(appAddress + sizeof(srcIP), &srcPort, sizeof(srcPort));
+			::send(s, appAddress, sizeof(appAddress), 0);
+		}
+
+		return result;
 	}
 
-	return pThis->m_nextWSProcTable.lpWSPConnect(s, name, namelen, lpCallerData, lpCalleeData, lpSQOS, lpGQOS, lpErrno);
+	return m_nextWSProcTable.lpWSPConnect(s, name, namelen, lpCallerData, lpCalleeData, lpSQOS, lpGQOS, lpErrno);
 }
 
 int CSocketProvider::Initialize(

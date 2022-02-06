@@ -27,6 +27,12 @@
     <ClInclude Include="CSocketRedirectRules.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ProviderService\CIPC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ProviderService\CNamedPipe.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -39,6 +45,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CSocketRedirectRules.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ProviderService\CIPC.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ProviderService\CNamedPipe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -32,7 +32,10 @@ int CSocketRedirectRules::AddRules(LPCSTR srcIP, USHORT srcPort, LPCSTR destIP, 
 	ULONG sIP = inet_addr(srcIP);
 	ULONG dIP = inet_addr(destIP);
 
-	return AddRules(sIP, srcPort, dIP, destPort);
+	USHORT sPort = htons(srcPort);
+	USHORT dPort = htons(destPort);
+
+	return AddRules(sIP, sPort, dIP, dPort);
 }
 
 int CSocketRedirectRules::RemoveRules(ULONG srcIP, USHORT srcPort)
@@ -70,7 +73,7 @@ int CSocketRedirectRules::FindRules(ULONG srcIP, USHORT srcPort, ULONG& destIP, 
 		{
 			destIP = rule.destIP;
 			destPort = rule.destPort;
-			break;
+			return 0;
 		}
 	}
 
