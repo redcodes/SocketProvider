@@ -101,7 +101,8 @@ void ThreadProc(void* param)
 		int nReadLength = 0;
 		int nWriteLength = 0;
 
-		while (TRUE)
+		bool bLoop = true;
+		while (bLoop)
 		{
 			byte recvBuf[4096] = { 0 };
 
@@ -127,6 +128,7 @@ void ThreadProc(void* param)
 						if (nReadLength <= 0)
 						{
 							LOG_INFO(_T("read failed"));
+							bLoop = false;
 							break;
 						}
 
@@ -136,6 +138,7 @@ void ThreadProc(void* param)
 						if (nWriteLength <= 0)
 						{
 							LOG_INFO(_T("write failed"));
+							bLoop = false;
 							break;
 						}
 					}
@@ -147,6 +150,7 @@ void ThreadProc(void* param)
 						if (nReadLength <= 0)
 						{
 							LOG_INFO(_T("read failed"));
+							bLoop = false;
 							break;
 						}
 
@@ -156,6 +160,7 @@ void ThreadProc(void* param)
 						if (nWriteLength <= 0)
 						{
 							LOG_INFO(_T("write failed"));
+							bLoop = false;
 							break;
 						}
 					}
@@ -167,6 +172,9 @@ void ThreadProc(void* param)
 					break;
 				}
 			}
+			
+			if (!bLoop)
+				break;
 		}
 
 	} while (FALSE);
@@ -267,7 +275,8 @@ int main()
 	pCmdThread->Start();
 
 	// 初始化代理规则
-	redirectRuleList.AddRules("120.53.233.203", 1234, "127.0.0.1", 8888);
+//	redirectRuleList.AddRules("120.53.233.203", 1234, "127.0.0.1", 8888);
+	redirectRuleList.AddRules("114.115.205.144", 80, "127.0.0.1", 8888);
 
 	while (TRUE)
 	{
