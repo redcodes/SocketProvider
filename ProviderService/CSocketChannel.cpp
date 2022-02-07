@@ -116,7 +116,31 @@ int CSocketChannel::Read(LPSTR buf, int bufSize)
 
 int CSocketChannel::Write(LPCSTR buf, int bufSize)
 {
-	return ::send(m_hSocket, buf, bufSize, 0);
+	size_t    nleft;
+	size_t   nwritten;
+
+	nleft = bufSize;
+	while (nleft > 0)
+	{
+		if ((nwritten = ::send(m_hSocket, buf, nleft, 0)) < 0)
+		{
+			if (nleft == SOCKET_ERROR)
+				return -1;    /* error, return -1 */
+			else
+				break;        /* error, return amount written so far */
+		}
+		else if (nwritten == 0)
+		{
+			break;
+		}
+		nleft -= nwritten;
+		buf += nwritten;
+	}
+
+	return(bufSize - nleft);
+
+
+//	return ::send(m_hSocket, buf, bufSize, 0);
 }
 
 int CSocketChannel::Close()

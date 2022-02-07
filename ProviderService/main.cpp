@@ -127,7 +127,11 @@ void ThreadProc(void* param)
 						nReadLength = pLocalChannel->Read((LPSTR)recvBuf, sizeof(recvBuf));
 						if (nReadLength <= 0)
 						{
-							LOG_INFO(_T("read failed"));
+							if (nReadLength == 0)
+								LOG_INFO(_T("local channel close"));
+							else
+								LOG_INFO(_T("read failed"));
+
 							bLoop = false;
 							break;
 						}
@@ -149,12 +153,16 @@ void ThreadProc(void* param)
 						nReadLength = pRemoteChannel->Read((LPSTR)recvBuf, sizeof(recvBuf));
 						if (nReadLength <= 0)
 						{
-							LOG_INFO(_T("read failed"));
+							if (nReadLength == 0)
+								LOG_INFO(_T("remote channel close"));
+							else
+								LOG_INFO(_T("read failed"));
+
 							bLoop = false;
 							break;
 						}
 
-						LOG_INFOA("request = %s", recvBuf);
+						LOG_INFOA("response = %s", recvBuf);
 
 						nWriteLength = pLocalChannel->Write((LPSTR)recvBuf, nReadLength);
 						if (nWriteLength <= 0)
@@ -192,12 +200,52 @@ void ThreadProc(void* param)
 	}
 }
 
+int CmdCallback(LPCSTR request, DWORD requestSize, LPSTR response, DWORD& responseSize, void* param)
+{
+	BYTE* buf = (BYTE*)request;
+	BYTE* outbuf = (BYTE*)response;
+
+	ULONG srcIP, destIP = 0;
+	USHORT srcPort, destPort = 0;
+	DWORD appPID = 0;
+	int isRedirect = 0;
+
+	memcpy(&srcIP, buf, sizeof(srcIP));
+	memcpy(&srcPort, buf + sizeof(srcIP), sizeof(srcPort));
+	memcpy(&appPID, buf + sizeof(srcIP) + sizeof(srcPort), sizeof(appPID));
+	if (appPID == GetCurrentProcessId())	// 拦截进程是本地数据代理进程，则不重定向。
+		isRedirect = 0;
+	else
+		isRedirect = 1;
+
+	int finded = redirectRuleList.FindRules(srcIP, srcPort, destIP, destPort);
+	if (isRedirect && 0 == finded && destIP != 0 && destPort != 0)
+	{
+		responseSize = 6;
+		ZeroMemory(outbuf, responseSize);
+		memcpy(outbuf, &destIP, sizeof(destIP));
+		memcpy(outbuf + sizeof(destIP), &destPort, sizeof(destPort));
+	}
+	else
+	{
+//		ZeroMemory(outbuf, sizeof(buf));
+		responseSize = 0;
+	}
+
+	return 0;
+}
+
 void CmdThreadProc(void* param)
 {
+	CIPC* pIPC = CIPC::GetInstance();
+	pIPC->Bind(PIPENAME, 50, CmdCallback, NULL);
+
+	return;
+
 	while (TRUE)
 	{
 		CIPC* pIPC = CIPC::GetInstance();
-		pIPC->Bind(PIPENAME, 50);
+		pIPC->Bind(PIPENAME, 50,NULL,NULL);
 
 		const int BUFSIZE = 10;
 		BYTE buf[BUFSIZE] = { 0 };
@@ -241,7 +289,7 @@ void CmdThreadProc(void* param)
 void TestPipeServer()
 {
 	CIPC* pIPC = CIPC::GetInstance();
-	pIPC->Bind(PIPENAME, 50);
+	pIPC->Bind(PIPENAME, 50, CmdCallback, NULL);
 
 	char* buf = new char[1024];
 	memset(buf, 0, 1024);
@@ -266,6 +314,10 @@ int main()
 {
 	Init();
 
+// 	TestPipeServer();
+// 	return 0;
+
+
 	// 启动本地监听服务
 	InetSocketAddress address("127.0.0.1", 8888);
 	ServerSocket serverSocket;
@@ -275,7 +327,7 @@ int main()
 	pCmdThread->Start();
 
 	// 初始化代理规则
-//	redirectRuleList.AddRules("120.53.233.203", 1234, "127.0.0.1", 8888);
+	redirectRuleList.AddRules("120.53.233.203", 1234, "127.0.0.1", 8888);
 	redirectRuleList.AddRules("114.115.205.144", 80, "127.0.0.1", 8888);
 
 	while (TRUE)

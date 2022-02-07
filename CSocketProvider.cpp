@@ -54,7 +54,11 @@ int FindRules(ULONG srcIP, USHORT srcPort, ULONG& destIP, USHORT& destPort)
 	do
 	{
 		if ((result = pIPC->Connect(IPCNAME)) != 0)
+		{
+			LOG_INFO(_T("pipe connect failed = %d"), result);
 			break;
+		}
+
 
 		const int BUFSIZE = 10;
 		DWORD pid = GetCurrentProcessId();
