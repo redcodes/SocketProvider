@@ -242,7 +242,7 @@ int CNamedPipe::RunLoop(DWORD dwTimeout /*= INFINITE*/)
 			fSuccess = ReadFile(
 				pPipe->hPipe,
 				pPipe->chRequest,
-				BUFSIZE * sizeof(TCHAR),
+				BUFSIZE,
 				&pPipe->cbRead,
 				&pPipe->oOverlap);
 
