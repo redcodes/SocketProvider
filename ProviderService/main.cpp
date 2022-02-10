@@ -42,10 +42,10 @@ void TestChannel()
 	serverSocket.Bind(address, 50);
 
 	CSocketChannel* pClientChannel = serverSocket.Accept();
-	pClientChannel->Write(hello, strlen(hello));
+	pClientChannel->Send(hello, strlen(hello));
 
 	char recvBuf[20] = { 0 };
-	pClientChannel->Read(recvBuf, sizeof(recvBuf));
+	pClientChannel->Recv(recvBuf, sizeof(recvBuf));
 	printf("%s", recvBuf);
 
 	pClientChannel->Close();
@@ -61,7 +61,7 @@ void ThreadProc(void* param)
 	{
 		// 接收真实的应用地址
 		byte appAddress[6] = { 0 };
-		pLocalChannel->Read((LPSTR)appAddress, sizeof(appAddress));
+		pLocalChannel->Recv((LPSTR)appAddress, sizeof(appAddress));
 
 		ULONG remoteIP = 0;
 		USHORT remotePort = 0;
@@ -124,7 +124,7 @@ void ThreadProc(void* param)
 				{
 					if (readfds.fd_array[i] == pLocalChannel->Socket())
 					{
-						nReadLength = pLocalChannel->Read((LPSTR)recvBuf, sizeof(recvBuf));
+						nReadLength = pLocalChannel->Recv((LPSTR)recvBuf, sizeof(recvBuf));
 						if (nReadLength <= 0)
 						{
 							if (nReadLength == 0)
@@ -138,7 +138,7 @@ void ThreadProc(void* param)
 
 						LOG_INFOA("request = %s", recvBuf);
 
-						nWriteLength = pRemoteChannel->Write((LPSTR)recvBuf, nReadLength);
+						nWriteLength = pRemoteChannel->Send((LPSTR)recvBuf, nReadLength);
 						if (nWriteLength <= 0)
 						{
 							LOG_INFO(_T("write failed"));
@@ -150,7 +150,7 @@ void ThreadProc(void* param)
 					// 远程应用服务器返回数据
 					if (readfds.fd_array[i] == pRemoteChannel->Socket())
 					{
-						nReadLength = pRemoteChannel->Read((LPSTR)recvBuf, sizeof(recvBuf));
+						nReadLength = pRemoteChannel->Recv((LPSTR)recvBuf, sizeof(recvBuf));
 						if (nReadLength <= 0)
 						{
 							if (nReadLength == 0)
@@ -164,7 +164,7 @@ void ThreadProc(void* param)
 
 						LOG_INFOA("response = %s", recvBuf);
 
-						nWriteLength = pLocalChannel->Write((LPSTR)recvBuf, nReadLength);
+						nWriteLength = pLocalChannel->Send((LPSTR)recvBuf, nReadLength);
 						if (nWriteLength <= 0)
 						{
 							LOG_INFO(_T("write failed"));
@@ -329,6 +329,7 @@ int main()
 	// 初始化代理规则
 	redirectRuleList.AddRules("120.53.233.203", 1234, "127.0.0.1", 8888);
 	redirectRuleList.AddRules("114.115.205.144", 80, "127.0.0.1", 8888);
+	redirectRuleList.AddRules("111.206.209.44", 80, "127.0.0.1", 8888);
 
 	while (TRUE)
 	{

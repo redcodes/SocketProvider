@@ -33,6 +33,12 @@
     <ClCompile Include="CNamedPipe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="CProtocol.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CSimpleBuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CSocketChannel.h">
@@ -51,6 +57,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="CNamedPipe.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CProtocol.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CSimpleBuffer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

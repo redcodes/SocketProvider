@@ -146,6 +146,8 @@
     <ClCompile Include="..\CSocketRedirectRules.cpp" />
     <ClCompile Include="CIPC.cpp" />
     <ClCompile Include="CNamedPipe.cpp" />
+    <ClCompile Include="CProtocol.cpp" />
+    <ClCompile Include="CSimpleBuffer.cpp" />
     <ClCompile Include="CSocketChannel.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ThreadImpl.cpp" />
@@ -154,6 +156,8 @@
     <ClInclude Include="..\CSocketRedirectRules.h" />
     <ClInclude Include="CIPC.h" />
     <ClInclude Include="CNamedPipe.h" />
+    <ClInclude Include="CProtocol.h" />
+    <ClInclude Include="CSimpleBuffer.h" />
     <ClInclude Include="CSocketChannel.h" />
     <ClInclude Include="IThread.h" />
     <ClInclude Include="ThreadImpl.h" />

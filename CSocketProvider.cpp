@@ -110,12 +110,23 @@ CSocketProvider::WSPConnect(
 {
 	LOG_INFO(_T("WSPConnect"));
 
+	BOOL bRedirect = FALSE;
 	ULONG srcIP = ((sockaddr_in*)name)->sin_addr.S_un.S_addr;
 	USHORT srcPort = ((sockaddr_in*)name)->sin_port;
 	ULONG destIP = 0;
 	USHORT destPort = 0;
 
-	if (0 == FindRules(srcIP, srcPort, destIP, destPort) && (destIP != 0 && destPort != 0))
+	int type = 0;
+	int length = sizeof(int);
+
+	getsockopt(s, SOL_SOCKET, SO_TYPE, (char*)&type, &length);
+	LOG_INFO(_T("Socket Type Is %d"),type);
+	if (type == SOCK_STREAM)
+		bRedirect = TRUE;
+	else if (type == SOCK_DGRAM)
+		bRedirect = FALSE;
+
+	if (bRedirect && 0 == FindRules(srcIP, srcPort, destIP, destPort) && (destIP != 0 && destPort != 0))
 	{
 		SOCKADDR_IN transferSrv;
 		transferSrv.sin_family = AF_INET;
@@ -162,6 +173,45 @@ CSocketProvider::WSPConnect(
 	return m_nextWSProcTable.lpWSPConnect(s, name, namelen, lpCallerData, lpCalleeData, lpSQOS, lpGQOS, lpErrno);
 }
 
+int WSPAPI CSocketProvider::WSPSendTo(
+	_In_ SOCKET s,
+	_In_reads_(dwBufferCount) LPWSABUF lpBuffers,
+	_In_ DWORD dwBufferCount,
+	_Out_opt_ LPDWORD lpNumberOfBytesSent,
+	_In_ DWORD dwFlags,
+	_In_reads_bytes_opt_(iTolen) const struct sockaddr FAR* lpTo,
+	_In_ int iTolen,
+	_Inout_opt_ LPWSAOVERLAPPED lpOverlapped,
+	_In_opt_ LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine,
+	_In_opt_ LPWSATHREADID lpThreadId,
+	_Out_ LPINT lpErrno
+)
+{
+	LOG_INFOA(__FUNCDNAME__);
+	ULONG srcIP = ((sockaddr_in*)lpTo)->sin_addr.S_un.S_addr;
+	USHORT srcPort = ((sockaddr_in*)lpTo)->sin_port;
+
+	ULONG destIP = 0;
+	USHORT destPort = 0;
+
+	if (0 == FindRules(srcIP, srcPort, destIP, destPort) && (destIP != 0 && destPort != 0))
+	{
+		SOCKADDR_IN transferSrv;
+		transferSrv.sin_family = AF_INET;
+		transferSrv.sin_addr.s_addr = destIP;
+		transferSrv.sin_port = destPort;
+		int result = m_nextWSProcTable.lpWSPSendTo(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, (SOCKADDR*)&transferSrv, iTolen, lpOverlapped, lpCompletionRoutine, lpThreadId, lpErrno);
+		if (SOCKET_ERROR == result)
+		{
+			LOG_INFO(_T("WSPSendTo LastError = %u\n"), *lpErrno);
+		}
+
+		return result;
+	}
+
+	return m_nextWSProcTable.lpWSPSendTo(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpTo, iTolen, lpOverlapped, lpCompletionRoutine, lpThreadId, lpErrno);
+}
+
 int CSocketProvider::Initialize(
 	WORD                wVersion,
 	LPWSPDATA           lpWSPData,
@@ -169,7 +219,7 @@ int CSocketProvider::Initialize(
 	WSPUPCALLTABLE      UpCallTable,
 	LPWSPPROC_TABLE     lpProcTable)
 {
-	OutputDebugString(_T("Initialize"));
+	LOG_INFO(_T("Initialize"));
 
 	int result = 0;
 
@@ -245,6 +295,7 @@ int CSocketProvider::Initialize(
 		m_nextWSProcTable = *lpProcTable;
 
 		lpProcTable->lpWSPConnect = &CSocketProvider::WSPConnect;
+		lpProcTable->lpWSPSendTo = &CSocketProvider::WSPSendTo;
 
 	} while (FALSE);
 
