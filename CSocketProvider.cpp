@@ -3,6 +3,7 @@
 #include <Ws2tcpip.h>
 #include "ProviderService/CIPC.h"
 #include "winsock.h"
+#include "ProviderService/Log.h"
 
 const TCHAR* IPCNAME = _T("\\\\.\\pipe\\namedpipeServer");
 LPWSAPROTOCOL_INFOW GetProvider(LPINT lpnTotalProtocols)

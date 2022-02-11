@@ -21,9 +21,6 @@
     <ClInclude Include="CSocketProvider.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Log.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="CSocketRedirectRules.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -31,6 +28,21 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ProviderService\CNamedPipe.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ProviderService\Log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ProviderService\CTaskQueue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ProviderService\CTaskQueueImpl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ProviderService\IThread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ProviderService\ThreadImpl.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -51,6 +63,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ProviderService\CNamedPipe.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ProviderService\Log.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ProviderService\CTaskQueue.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ProviderService\CTaskQueueImpl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ProviderService\ThreadImpl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
