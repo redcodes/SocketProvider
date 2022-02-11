@@ -5,7 +5,7 @@
 #include "CSocketChannel.h"
 #include "ThreadImpl.h"
 #include "../CSocketRedirectRules.h"
-#include "../Log.h"
+#include "Log.h"
 #include "CIPC.h"
 
 LPCSTR hello = "hello,world";
@@ -42,10 +42,10 @@ void TestChannel()
 	serverSocket.Bind(address, 50);
 
 	CSocketChannel* pClientChannel = serverSocket.Accept();
-	pClientChannel->Send(hello, strlen(hello));
+	pClientChannel->Write(hello, strlen(hello));
 
 	char recvBuf[20] = { 0 };
-	pClientChannel->Recv(recvBuf, sizeof(recvBuf));
+	pClientChannel->Read(recvBuf, sizeof(recvBuf));
 	printf("%s", recvBuf);
 
 	pClientChannel->Close();
@@ -61,7 +61,7 @@ void ThreadProc(void* param)
 	{
 		// 接收真实的应用地址
 		byte appAddress[6] = { 0 };
-		pLocalChannel->Recv((LPSTR)appAddress, sizeof(appAddress));
+		pLocalChannel->Read((LPSTR)appAddress, sizeof(appAddress));
 
 		ULONG remoteIP = 0;
 		USHORT remotePort = 0;
@@ -124,7 +124,7 @@ void ThreadProc(void* param)
 				{
 					if (readfds.fd_array[i] == pLocalChannel->Socket())
 					{
-						nReadLength = pLocalChannel->Recv((LPSTR)recvBuf, sizeof(recvBuf));
+						nReadLength = pLocalChannel->Read((LPSTR)recvBuf, sizeof(recvBuf));
 						if (nReadLength <= 0)
 						{
 							if (nReadLength == 0)
@@ -138,7 +138,7 @@ void ThreadProc(void* param)
 
 						LOG_INFOA("request = %s", recvBuf);
 
-						nWriteLength = pRemoteChannel->Send((LPSTR)recvBuf, nReadLength);
+						nWriteLength = pRemoteChannel->Write((LPSTR)recvBuf, nReadLength);
 						if (nWriteLength <= 0)
 						{
 							LOG_INFO(_T("write failed"));
@@ -150,7 +150,7 @@ void ThreadProc(void* param)
 					// 远程应用服务器返回数据
 					if (readfds.fd_array[i] == pRemoteChannel->Socket())
 					{
-						nReadLength = pRemoteChannel->Recv((LPSTR)recvBuf, sizeof(recvBuf));
+						nReadLength = pRemoteChannel->Read((LPSTR)recvBuf, sizeof(recvBuf));
 						if (nReadLength <= 0)
 						{
 							if (nReadLength == 0)
@@ -164,7 +164,7 @@ void ThreadProc(void* param)
 
 						LOG_INFOA("response = %s", recvBuf);
 
-						nWriteLength = pLocalChannel->Send((LPSTR)recvBuf, nReadLength);
+						nWriteLength = pLocalChannel->Write((LPSTR)recvBuf, nReadLength);
 						if (nWriteLength <= 0)
 						{
 							LOG_INFO(_T("write failed"));
@@ -310,13 +310,86 @@ void TestPipeServer()
 	pIPC = NULL;
 }
 
+#include "CTaskQueueImpl.h"
+class CTaskImpl : public CTask
+{
+public:
+	CTaskImpl(DWORD value)
+	{
+		m_value = value;
+	}
+
+	virtual ~CTaskImpl()
+	{
+
+	}
+
+	virtual int Execute()
+	{
+		LOG_INFO(_T("value = %d"),m_value);
+
+		return 0;
+	}
+
+	virtual int Cancel()
+	{
+		return 0;
+	}
+private:
+	DWORD m_value;
+};
+
+static void QueueThreadProc(void* param)
+{
+	CTaskQueueImpl* taskQueue = (CTaskQueueImpl*)param;
+
+	DWORD i = 0;
+	while (taskQueue->IsRunning())
+	{
+		CTask* pTask = new CTaskImpl(i++);
+		taskQueue->AddTask(pTask);
+
+		Sleep(1);
+	}
+
+}
+
+#include "Log.h"
+void TestTaksQueue()
+{
+	LOG_INFO(_T("buf = %s"), _T("Hello,World"));
+	LOG_INFOA(("buf = %s"), ("Hello,World"));
+
+	CTaskQueueImpl taskQueue;	
+	taskQueue.Start();
+
+	IThread* pThread = new CThreadImpl(QueueThreadProc, &taskQueue);
+	pThread->Start();
+
+	while (TRUE)
+	{
+		continue;
+	}
+
+	taskQueue.Stop();
+	pThread->Stop();
+
+	delete pThread;
+	pThread = NULL;
+
+}
+
+
+
 int main()
 {
+	TestTaksQueue();
+	return 0;
+
 	Init();
 
 // 	TestPipeServer();
 // 	return 0;
-
 
 	// 启动本地监听服务
 	InetSocketAddress address("127.0.0.1", 8888);
@@ -329,7 +402,6 @@ int main()
 	// 初始化代理规则
 	redirectRuleList.AddRules("120.53.233.203", 1234, "127.0.0.1", 8888);
 	redirectRuleList.AddRules("114.115.205.144", 80, "127.0.0.1", 8888);
-	redirectRuleList.AddRules("111.206.209.44", 80, "127.0.0.1", 8888);
 
 	while (TRUE)
 	{

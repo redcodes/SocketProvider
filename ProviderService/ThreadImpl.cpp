@@ -36,7 +36,7 @@ void CThreadImpl::Stop()
 	if (NULL != m_pRunnable)
 		m_pRunnable->Stop();
 
-	Join(5);
+	Join(INFINITE);
 
 	if (NULL != m_hThread)
 		CloseHandle(m_hThread);

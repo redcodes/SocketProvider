@@ -1,6 +1,6 @@
 #include "CNamedPipe.h"
 #include <assert.h>
-#include "../Log.h"
+#include "Log.h"
 
 #define CONNECTING_STATE 0 
 #define READING_STATE 1 

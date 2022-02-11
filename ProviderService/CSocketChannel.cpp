@@ -109,12 +109,12 @@ void CSocketChannel::Release(CSocketChannel* pChannel)
 	}
 }
 
-int CSocketChannel::Recv(LPSTR buf, int bufSize)
+int CSocketChannel::Read(LPSTR buf, int bufSize)
 {
 	return ::recv(m_hSocket, buf, bufSize, 0);
 }
 
-int CSocketChannel::Send(LPCSTR buf, int bufSize)
+int CSocketChannel::Write(LPCSTR buf, int bufSize)
 {
 	size_t    nleft;
 	size_t   nwritten;

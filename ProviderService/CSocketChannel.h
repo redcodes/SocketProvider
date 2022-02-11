@@ -24,9 +24,8 @@ public:
 	static CSocketChannel* Create(int af, int type, int protocol);
 	static CSocketChannel* Create(SOCKET socket);
 	static void Release(CSocketChannel* pChannel);
-	int Recv(LPSTR buf,int bufSize);
-	int Send(LPCSTR buf,int bufSize);
-
+	int Read(LPSTR buf,int bufSize);
+	int Write(LPCSTR buf,int bufSize);
 	int Close();	
 	SOCKET Socket();
 protected:
