@@ -63,6 +63,20 @@ USHORT InetSocketAddress::GetPort() const
 	return m_port;
 }
 
+std::string InetSocketAddress::ToString()
+{
+	in_addr in;
+	memcpy(&in, &m_address, 4);
+	char* ip = inet_ntoa(in);
+
+	USHORT port = ntohs(m_port);
+
+	char address[20] = { 0 };
+	sprintf_s(address, "%s:%d",ip,port);
+
+	return address;
+}
+
 CServerSocketChannel::CServerSocketChannel(int af, int type, int protocol)
 	:CSocketChannel(af, type, protocol)
 {

@@ -28,7 +28,6 @@ CLogTask::~CLogTask()
 int CLogTask::Execute()
 {
 	_tprintf(m_sLog);
-	_tprintf(_T("\r\n"));
 
 	//	OutputDebugString(m_sLog);
 

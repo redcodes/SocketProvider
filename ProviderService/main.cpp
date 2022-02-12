@@ -468,7 +468,7 @@ int StartUDPProxy(LPCSTR srcIP, USHORT srcPort)
 						break;
 					}
 
-					LOG_INFOA("request = %s", recvBuf);
+					LOG_INFOA("address = %s, request = %s", localAddress.ToString().c_str(), recvBuf);
 
 					nWriteLength = pRemoteChannel->SendTo(remoteAddress, (LPSTR)recvBuf, nReadLength);
 					if (nWriteLength <= 0)
@@ -495,7 +495,7 @@ int StartUDPProxy(LPCSTR srcIP, USHORT srcPort)
 						break;
 					}
 
-					LOG_INFOA("response = %s", recvBuf);
+					LOG_INFOA("address = %s, response = %s", remoteAddress.ToString().c_str(), recvBuf);
 
 					nWriteLength = pLocalChannel->SendTo(localAddress, (LPSTR)recvBuf, nReadLength);
 					if (nWriteLength <= 0)

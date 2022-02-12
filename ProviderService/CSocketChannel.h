@@ -2,7 +2,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS 1
 #include <winsock2.h>
 #pragma comment(lib, "Ws2_32.lib")
-
+#include<iostream>
 
 class InetSocketAddress
 {
@@ -15,6 +15,8 @@ public:
 
 	ULONG GetAddress()const;
 	USHORT GetPort()const;
+
+	std::string ToString();
 private:
 	ULONG m_address;
 	USHORT m_port;
