@@ -42,6 +42,17 @@ InetSocketAddress::~InetSocketAddress()
 
 }
 
+InetSocketAddress& InetSocketAddress::operator=(const InetSocketAddress& address)
+{
+	if (&address == this)
+		return *this;
+
+	this->m_address = address.GetAddress();
+	this->m_port = address.GetPort();
+
+	return *this;
+}
+
 ULONG InetSocketAddress::GetAddress() const
 {
 	return m_address;
@@ -53,7 +64,7 @@ USHORT InetSocketAddress::GetPort() const
 }
 
 CServerSocketChannel::CServerSocketChannel(int af, int type, int protocol)
-	:CSocketChannel(af,type,protocol)
+	:CSocketChannel(af, type, protocol)
 {
 
 }
@@ -100,6 +111,12 @@ CSocketChannel* CSocketChannel::Create(SOCKET socket)
 	return new CSocketChannel(socket);
 }
 
+CSocketChannel* CSocketChannel::Create(int af, int type, int protocol)
+{
+	CSocketChannel* pChannel = new CSocketChannel(af, type, protocol);
+	return pChannel;
+}
+
 void CSocketChannel::Release(CSocketChannel* pChannel)
 {
 	if (NULL != pChannel)
@@ -140,7 +157,35 @@ int CSocketChannel::Write(LPCSTR buf, int bufSize)
 	return(bufSize - nleft);
 
 
-//	return ::send(m_hSocket, buf, bufSize, 0);
+	//	return ::send(m_hSocket, buf, bufSize, 0);
+}
+
+int CSocketChannel::SendTo(const InetSocketAddress& address, LPCSTR buf, int bufSize)
+{
+	sockaddr_in remote = { 0 };
+	remote.sin_family = AF_INET;
+	remote.sin_addr.S_un.S_addr = address.GetAddress();
+	remote.sin_port = address.GetPort();
+
+	int nSize = sizeof(remote);
+
+	return ::sendto(m_hSocket, buf, bufSize, 0, (sockaddr*)&remote, nSize);
+}
+
+int CSocketChannel::RecvFrom(InetSocketAddress& address, LPSTR buf, int bufSize)
+{
+	sockaddr_in remote;
+	int nSize = sizeof(remote);
+
+	int result = ::recvfrom(m_hSocket, buf, bufSize, 0, (sockaddr*)&remote, &nSize);
+
+	ULONG fromIP = ((sockaddr_in*)&remote)->sin_addr.S_un.S_addr;
+	USHORT fromPort = ((sockaddr_in*)&remote)->sin_port;
+
+	InetSocketAddress from(fromIP, fromPort);
+	address = from;
+
+	return result;
 }
 
 int CSocketChannel::Close()
@@ -174,7 +219,7 @@ SOCKET CSocketChannel::Socket()
 	return m_hSocket;
 }
 
-CClientSocketChannel::CClientSocketChannel(int af, int type, int protocol) : CSocketChannel(af,type,protocol)
+CClientSocketChannel::CClientSocketChannel(int af, int type, int protocol) : CSocketChannel(af, type, protocol)
 {
 
 }
@@ -193,6 +238,31 @@ int CClientSocketChannel::Connect(const InetSocketAddress& local)
 
 	if (SOCKET_ERROR == ::connect(Socket(), (struct sockaddr*)&server_addr, sizeof(server_addr)))
 		return WSAGetLastError();
+
+	return 0;
+}
+
+UDPServerSocket::UDPServerSocket() : CSocketChannel(AF_INET, SOCK_DGRAM, 0)
+{
+
+}
+
+UDPServerSocket::~UDPServerSocket()
+{
+
+}
+
+int UDPServerSocket::Bind(const InetSocketAddress& local, int backlog)
+{
+	struct sockaddr_in sin;
+	sin.sin_family = AF_INET;
+	sin.sin_port = local.GetPort();
+	sin.sin_addr.S_un.S_addr = local.GetAddress();
+
+	if ((::bind(Socket(), (LPSOCKADDR)&sin, sizeof(sin)) == SOCKET_ERROR))
+	{
+		return WSAGetLastError();
+	}
 
 	return 0;
 }

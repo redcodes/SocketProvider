@@ -11,6 +11,8 @@ public:
 	InetSocketAddress(ULONG ip, USHORT port);
 	virtual ~InetSocketAddress();
 
+	InetSocketAddress& operator=(const InetSocketAddress& address);
+
 	ULONG GetAddress()const;
 	USHORT GetPort()const;
 private:
@@ -24,8 +26,13 @@ public:
 	static CSocketChannel* Create(int af, int type, int protocol);
 	static CSocketChannel* Create(SOCKET socket);
 	static void Release(CSocketChannel* pChannel);
+
 	int Read(LPSTR buf,int bufSize);
 	int Write(LPCSTR buf,int bufSize);
+
+	int SendTo(const InetSocketAddress& address, LPCSTR buf, int bufSize);
+	int RecvFrom(InetSocketAddress& address, LPSTR buf, int bufSize);
+
 	int Close();	
 	SOCKET Socket();
 protected:
@@ -67,6 +74,15 @@ public:
 	CSocketChannel* Accept();
 private:
 	CServerSocketChannel* m_pListenChannel;
+};
+
+class UDPServerSocket : public CSocketChannel
+{
+public:
+	UDPServerSocket();
+	virtual ~UDPServerSocket();
+
+	int Bind(const InetSocketAddress& local, int backlog);
 };
 
 

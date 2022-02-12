@@ -53,7 +53,7 @@ void LOG_FORMATW(const WCHAR* fileName, int line, const WCHAR* format, ...)
 	GetLocalTime(&stTime);
 
 	CString sLog;
-	sLog.Format(_T("[P%04d] [T%04d] [%04d-%02d-%02d %02d:%02d:%02d:%03d] [%s:%d]: %s"),
+	sLog.Format(_T("[P%04d] [T%04d] [%04d-%02d-%02d %02d:%02d:%02d:%03d] [%s:%d]: %s\r\n"),
 		(int)GetCurrentProcessId(),
 		(int)GetCurrentThreadId(),
 		(int)stTime.wYear,
@@ -85,7 +85,7 @@ void LOG_FORMATA(const CHAR* fileName, int line, const CHAR* format, ...)
 	GetLocalTime(&stTime);
 
 	CStringA sLog;
-	sLog.Format(("[P%04d] [T%04d] [%04d-%02d-%02d %02d:%02d:%02d:%03d] [%s:%d]: %s"),
+	sLog.Format(("[P%04d] [T%04d] [%04d-%02d-%02d %02d:%02d:%02d:%03d] [%s:%d]: %s\r\n"),
 		(int)GetCurrentProcessId(),
 		(int)GetCurrentThreadId(),
 		(int)stTime.wYear,

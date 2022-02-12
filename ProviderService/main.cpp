@@ -379,29 +379,17 @@ void TestTaksQueue()
 
 }
 
-
-
-int main()
+int StartTCPProxy(LPCSTR srcIP, USHORT srcPort)
 {
-	TestTaksQueue();
-	return 0;
-
-	Init();
-
-// 	TestPipeServer();
-// 	return 0;
-
 	// 启动本地监听服务
-	InetSocketAddress address("127.0.0.1", 8888);
+	LPCSTR localIP = "127.0.0.1";
+	USHORT localPort = 8888;
+
+	InetSocketAddress address(localIP, localPort);
 	ServerSocket serverSocket;
 	serverSocket.Bind(address, 50);
 
-	IThread* pCmdThread = new CThreadImpl(CmdThreadProc, NULL);
-	pCmdThread->Start();
-
-	// 初始化代理规则
-	redirectRuleList.AddRules("120.53.233.203", 1234, "127.0.0.1", 8888);
-	redirectRuleList.AddRules("114.115.205.144", 80, "127.0.0.1", 8888);
+	redirectRuleList.AddRules(srcIP, srcPort, localIP, localPort);
 
 	while (TRUE)
 	{
@@ -410,6 +398,147 @@ int main()
 		pThread->Start();
 	}
 
+	return 0;
+}
+
+int StartUDPProxy(LPCSTR srcIP, USHORT srcPort)
+{
+	LPCSTR localIP = "127.0.0.1";
+	USHORT localPort = 8888;
+
+	redirectRuleList.AddRules(srcIP, srcPort, localIP, localPort);
+
+	InetSocketAddress localAddress(localIP, localPort);
+	UDPServerSocket* pLocalChannel = new UDPServerSocket;
+	pLocalChannel->Bind(localAddress, 50);
+
+	InetSocketAddress remoteAddress(srcIP, srcPort);
+	CSocketChannel* pRemoteChannel = CSocketChannel::Create(AF_INET, SOCK_DGRAM, 0);
+
+	fd_set readfds, writefds, exceptfds;
+	FD_ZERO(&readfds);
+	FD_ZERO(&writefds);
+	FD_ZERO(&exceptfds);
+
+	FD_SET(pLocalChannel->Socket(), &readfds);
+	FD_SET(pRemoteChannel->Socket(), &readfds);
+
+	FD_SET(pLocalChannel->Socket(), &exceptfds);
+	FD_SET(pRemoteChannel->Socket(), &exceptfds);
+
+	int selectResult = 0;
+	fd_set readfdsOld, writefdsOld, exceptfdsOld;
+
+	int nReadLength = 0;
+	int nWriteLength = 0;
+
+	bool bLoop = true;
+	while (bLoop)
+	{
+		byte recvBuf[4096] = { 0 };
+
+		readfdsOld = readfds;
+		writefdsOld = writefds;
+		exceptfdsOld = exceptfds;
+
+		selectResult = select(0, &readfdsOld, &writefdsOld, &exceptfdsOld, NULL);
+		if (selectResult <= 0)
+		{
+			LOG_INFO(_T("select error = %d"), WSAGetLastError());
+			break;
+		}
+
+		for (DWORD i = 0; i < readfds.fd_count; i++)
+		{
+			// 本地应用数据
+			if (FD_ISSET(readfds.fd_array[i], &readfdsOld))
+			{
+				if (readfds.fd_array[i] == pLocalChannel->Socket())
+				{
+					memset(recvBuf, 0, sizeof(recvBuf));
+					nReadLength = pLocalChannel->RecvFrom(localAddress, (LPSTR)recvBuf, sizeof(recvBuf));
+					if (nReadLength <= 0)
+					{
+						if (nReadLength == 0)
+							LOG_INFO(_T("local channel close"));
+						else
+							LOG_INFO(_T("read failed"));
+
+						bLoop = false;
+						break;
+					}
+
+					LOG_INFOA("request = %s", recvBuf);
+
+					nWriteLength = pRemoteChannel->SendTo(remoteAddress, (LPSTR)recvBuf, nReadLength);
+					if (nWriteLength <= 0)
+					{
+						LOG_INFO(_T("write failed"));
+						bLoop = false;
+						break;
+					}
+				}
+
+				// 远程应用服务器返回数据
+				if (readfds.fd_array[i] == pRemoteChannel->Socket())
+				{
+					memset(recvBuf, 0, sizeof(recvBuf));
+					nReadLength = pRemoteChannel->RecvFrom(remoteAddress, (LPSTR)recvBuf, sizeof(recvBuf));
+					if (nReadLength <= 0)
+					{
+						if (nReadLength == 0)
+							LOG_INFO(_T("remote channel close"));
+						else
+							LOG_INFO(_T("read failed"));
+
+						bLoop = false;
+						break;
+					}
+
+					LOG_INFOA("response = %s", recvBuf);
+
+					nWriteLength = pLocalChannel->SendTo(localAddress, (LPSTR)recvBuf, nReadLength);
+					if (nWriteLength <= 0)
+					{
+						LOG_INFO(_T("write failed"));
+						bLoop = false;
+						break;
+					}
+				}
+			}
+
+			if (FD_ISSET(exceptfds.fd_array[i], &exceptfdsOld))
+			{
+				LOG_INFO(_T("select except"));
+				break;
+			}
+		}
+	}
+
+	if (NULL != pRemoteChannel)
+	{
+		pRemoteChannel->Close();
+		CSocketChannel::Release(pRemoteChannel);
+	}
+
+	if (NULL != pLocalChannel)
+	{
+		pLocalChannel->Close();
+		CSocketChannel::Release(pLocalChannel);
+	}
+
+	return 0;
+}
+
+int main()
+{
+	Init();
+
+	IThread* pCmdThread = new CThreadImpl(CmdThreadProc, NULL);
+	pCmdThread->Start();
+
+//	StartTCPProxy("120.53.233.203", 1234);
+	StartUDPProxy("120.53.233.203", 1234);
 
 	UnInit();
 }
